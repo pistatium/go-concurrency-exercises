@@ -44,16 +44,17 @@ func main() {
 	tw := producer(stream)
 
 	// Consumer
+LOOP:
 	for {
 		select {
 		case tweet, ok := <-tw:
 			if ok {
 				consumer(tweet)
 			} else {
-				fmt.Printf("Process took %s\n", time.Since(start))
-				return
+				break LOOP
 			}
 		}
 	}
+	fmt.Printf("Process took %s\n", time.Since(start))
 
 }
