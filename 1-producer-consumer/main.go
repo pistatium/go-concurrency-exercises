@@ -22,12 +22,8 @@ func producer(stream Stream) <-chan *Tweet {
 			if err == ErrEOF {
 				break
 			}
-			if tweet == nil {
-				break
-			}
 			tw <- tweet
 		}
-		fmt.Println("closed")
 	}()
 	return tw
 }
