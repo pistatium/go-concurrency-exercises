@@ -11,6 +11,7 @@
 package main
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -27,16 +28,32 @@ type User struct {
 // HandleRequest runs the processes requested by users. Returns false
 // if process had to be killed
 func HandleRequest(process func(), u *User) bool {
-	u.Lock()
-	defer u.Unlock()
 	if !u.IsPremium && u.TimeUsed > 10 {
 		return false
 	}
+
+	ctx := context.Background()
+	if u.IsPremium {
+		process()
+		return true
+	}
+
+	u.Lock()
+	defer u.Unlock()
+
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(10 - u.TimeUsed) * time.Second)
+	defer cancel()
+
 	start := time.Now()
 	process()
 	used := time.Now().Sub(start)
 	u.TimeUsed += int64(used.Seconds())
-	return true
+	select {
+	case <-ctx.Done():
+		return false
+	default:
+		return true
+	}
 }
 
 func main() {
